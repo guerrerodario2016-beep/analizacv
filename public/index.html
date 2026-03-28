@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnalizaCV — Análisis de CV con Inteligencia Artificial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F5F0; --surface: #FFFFFF; --text: #1A1714; --muted: #7A7672;
+    --accent: #2D5016; --accent-light: #EAF2DF; --warn: #7A3B0E;
+    --warn-light: #FDF0E6; --border: #E2DDD6; --radius: 12px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; }
+  header { background: var(--text); color: #F7F5F0; padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.5px; }
+  .logo span { color: #A8C97F; }
+  .badge { font-size: 11px; font-weight: 500; background: rgba(255,255,255,0.12); padding: 4px 10px; border-radius: 99px; letter-spacing: 0.05em; }
+  .hero { background: var(--text); color: #F7F5F0; text-align: center; padding: 4rem 2rem 5rem; }
+  .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(32px, 6vw, 56px); line-height: 1.1; margin-bottom: 1rem; letter-spacing: -1px; }
+  .hero h1 em { font-style: italic; color: #A8C97F; }
+  .hero p { font-size: 17px; color: rgba(247,245,240,0.65); max-width: 480px; margin: 0 auto 2rem; line-height: 1.6; font-weight: 300; }
+  .steps { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin-top: 2.5rem; }
+  .step { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(247,245,240,0.55); }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(168,201,127,0.25); color: #A8C97F; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+  main { max-width: 720px; margin: -2.5rem auto 4rem; padding: 0 1.5rem; }
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1.5rem; }
+  .card-title { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1rem; }
+  textarea { width: 100%; min-height: 180px; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.7; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); resize: vertical; outline: none; transition: border-color 0.2s; }
+  textarea:focus { border-color: var(--text); }
+  input[type="text"] { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); margin-top: 10px; outline: none; transition: border-color 0.2s; }
+  input[type="text"]:focus { border-color: var(--text); }
+  .btn { width: 100%; padding: 15px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; background: var(--text); color: #F7F5F0; border: none; border-radius: 8px; cursor: pointer; margin-top: 1.25rem; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.01em; }
+  .btn:hover { opacity: 0.88; }
+  .btn:active { transform: scale(0.99); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); margin-top: 0.75rem; }
+  .btn-outline:hover { background: var(--bg); opacity: 1; }
+  #loading { display: none; text-align: center; padding: 3rem 2rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-msg { font-size: 15px; color: var(--muted); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+  #results { display: none; }
+  .score-hero { text-align: center; padding: 2rem; background: var(--text); color: #F7F5F0; border-radius: var(--radius); margin-bottom: 1.5rem; }
+  .score-num { font-family: 'DM Serif Display', serif; font-size: 72px; line-height: 1; margin-bottom: 0.25rem; }
+  .score-label { font-size: 13px; color: rgba(247,245,240,0.5); text-transform: uppercase; letter-spacing: 0.08em; }
+  .score-verdict { font-size: 16px; color: rgba(247,245,240,0.8); margin-top: 0.75rem; font-weight: 300; }
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  @media(max-width: 480px) { .metrics-grid { grid-template-columns: 1fr; } }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .metric-name { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.5rem; }
+  .metric-score { font-family: 'DM Serif Display', serif; font-size: 32px; line-height: 1; margin-bottom: 0.75rem; }
+  .bar-bg { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.5rem; }
+  .tag { font-size: 13px; padding: 5px 12px; border-radius: 99px; }
+  .tag-green { background: var(--accent-light); color: var(--accent); }
+  .tag-amber { background: var(--warn-light); color: var(--warn); }
+  .recs { font-size: 15px; line-height: 1.75; color: var(--text); font-weight: 300; }
+  footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--muted); }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Analiza<span>CV</span></div>
+  <span class="badge">Powered by IA</span>
+</header>
+
+<div class="hero">
+  <h1>Tu CV analizado<br>por <em>inteligencia artificial</em></h1>
+  <p>Descubre exactamente qué mejorar para conseguir más entrevistas. Análisis profesional en segundos.</p>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>Pega tu CV</div>
+    <div class="step"><div class="step-num">2</div>La IA lo analiza</div>
+    <div class="step"><div class="step-num">3</div>Mejora y destaca</div>
+  </div>
+</div>
+
+<main>
+  <div id="input-card" class="card">
+    <div class="card-title">Tu currículum</div>
+    <textarea id="cv-text" placeholder="Pega aquí todo el texto de tu CV: experiencia laboral, formación, habilidades, idiomas...&#10;&#10;Cuanto más completo, más preciso será el análisis."></textarea>
+    <input type="text" id="job-input" placeholder="Puesto al que aspiras (opcional) — ej: Diseñador UX, Desarrollador Junior...">
+    <button class="btn" id="analyze-btn" onclick="analyzeCV()">Analizar mi CV →</button>
+    <p style="font-size:12px; color:var(--muted); margin-top:10px; text-align:center;">Tu CV no se almacena. Se procesa y se descarta. <a href="/politica-privacidad.html" style="color:var(--muted);">Política de privacidad</a></p>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p class="loading-msg" id="loading-text">Leyendo tu CV...</p>
+  </div>
+
+  <div id="results">
+    <div class="score-hero">
+      <div class="score-label">Puntuación general</div>
+      <div class="score-num" id="overall-num">—</div>
+      <div class="score-label">/ 100</div>
+      <div class="score-verdict" id="score-verdict"></div>
+    </div>
+    <div class="metrics-grid" id="metrics-grid"></div>
+    <div class="card">
+      <div class="card-title">Puntos fuertes</div>
+      <div class="tags-row" id="strengths-tags"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Áreas de mejora</div>
+      <div class="tags-row" id="improvements-tags"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recomendaciones concretas</div>
+      <p class="recs" id="recs-text"></p>
+    </div>
+    <button class="btn btn-outline" onclick="resetForm()">Analizar otro CV</button>
+  </div>
+</main>
+
+<footer>
+  <p>AnalizaCV · España · <a href="/politica-privacidad.html">Política de privacidad</a></p>
+  <p style="margin-top:6px;">El análisis es orientativo y no garantiza resultados en procesos de selección.</p>
+</footer>
+
+<script>
+const loadingMessages = [
+  "Leyendo tu CV...",
+  "Identificando puntos fuertes...",
+  "Analizando experiencia y formación...",
+  "Generando recomendaciones personalizadas...",
+  "Casi listo..."
+];
+let loadingInterval;
+
+function startLoading() {
+  let i = 0;
+  document.getElementById('loading-text').textContent = loadingMessages[0];
+  loadingInterval = setInterval(() => {
+    i = Math.min(i + 1, loadingMessages.length - 1);
+    document.getElementById('loading-text').textContent = loadingMessages[i];
+  }, 2000);
+}
+
+function stopLoading() { clearInterval(loadingInterval); }
+
+async function analyzeCV() {
+  const cvText = document.getElementById('cv-text').value.trim();
+  const jobInput = document.getElementById('job-input').value.trim();
+  if (!cvText || cvText.length < 50) {
+    alert('Por favor pega el contenido de tu CV.');
+    return;
+  }
+  document.getElementById('input-card').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  startLoading();
+
+  try {
+    const response = await fetch('/api/analizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cvText, jobInput })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    stopLoading();
+    showResults(result);
+  } catch(err) {
+    stopLoading();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('input-card').style.display = 'block';
+    alert('Error al analizar el CV. Inténtalo de nuevo.');
+  }
+}
+
+function getColor(score) {
+  if (score >= 75) return '#3B6D11';
+  if (score >= 50) return '#854F0B';
+  return '#A32D2D';
+}
+
+function showResults(r) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  const score = r.overall;
+  document.getElementById('overall-num').textContent = score;
+  document.getElementById('overall-num').style.color = score >= 75 ? '#A8C97F' : score >= 50 ? '#F9C56A' : '#F09595';
+  document.getElementById('score-verdict').textContent = r.verdict || '';
+  document.getElementById('metrics-grid').innerHTML = r.metrics.map(m => `
+    <div class="metric-card">
+      <div class="metric-name">${m.name}</div>
+      <div class="metric-score" style="color:${getColor(m.score)}">${m.score}</div>
+      <div class="bar-bg"><div class="bar-fill" data-width="${m.score}" style="background:${getColor(m.score)};"></div></div>
+    </div>
+  `).join('');
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(el => { el.style.width = el.dataset.width + '%'; });
+  }, 100);
+  document.getElementById('strengths-tags').innerHTML = r.strengths.map(s => `<span class="tag tag-green">${s}</span>`).join('');
+  document.getElementById('improvements-tags').innerHTML = r.improvements.map(i => `<span class="tag tag-amber">${i}</span>`).join('');
+  document.getElementById('recs-text').textContent = r.recommendations;
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetForm() {
+  document.getElementById('cv-text').value = '';
+  document.getElementById('job-input').value = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('input-card').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
